@@ -1,0 +1,53 @@
+#! /bin/bash
+
+# strict error checking
+set -e
+set -u
+
+printf "%s" $'\e[1;32m
+    ##     ##  #######    ##    ##
+    ###   ###  ##     ##  ###   ##
+    #### ####  ##     ##  ####  ##
+    ## ### ##  ##     ##  ## ## ##
+    ##  #  ##  ##     ##  ##  ####
+    ##     ##  ##     ##  ##   ###
+    ##     ##  #######    ##    ##
+    MDN Offline Archiver
+
+    Attemping to build an archive of MDN...
+
+    '
+
+if ! [ -z "$DIR" ];
+then
+  echo "--> creating temp directory"
+  DIR=$(mktemp -d /tarball/tarball-generate.XXXXXX)
+else
+  echo "--> using provided directory $DIR"
+fi
+pushd "$DIR" > /dev/null
+
+echo "--> switched to $DIR, fetching MDN content"
+echo "    this may take a while..." # ~18.5 hours
+# shellcheck disable=SC2016
+wget -q -m -p -k -E -T 5 -t 3 -R 'mov,ogv,mp4,gz,bz2,zip,exe,download,flag*,login*,*\$history,*\$edit,*\$translate,*\$move,*\$subscribe,*\$json*,\$revision' -D developer.mozilla.org -X '*/profiles'  --reject-regex='(.*)(\$revert|$revision|%|demos|search\?)(.*)' -np https://developer.mozilla.org/en-US/
+
+echo "--> fetching MDN assets" # ~8 minutes
+grep -E -roh 'https://developer\.cdn\.mozilla\.net/[^ ^I,>'\''"):&]+' developer.mozilla.org/en-US/* | grep -v "demo" | sort | uniq | xargs wget -q -T 5 -t 3 -R 'reject suffixes' -D developer.cdn.mozilla.net -X 'demos' -np https://developer.mozilla.org/en-US/
+mkdir 'developer.cdn.mozilla.net'
+find . -maxdepth 1 -type f -exec mv {} developer.cdn.mozilla.net \;
+
+# echo "--> creating search index"
+# TODO: create search index for lunar.js
+# inject custom search page into content
+
+echo "--> creating tarball"
+tar czf mdn.tar.gz *
+
+echo "--> publishing to ?????"
+# TODO where do we publish this?
+# cp mdn.tar.gz /somewhere?
+# upload script?
+
+popd > /dev/null
+rm -rf "$DIR"
