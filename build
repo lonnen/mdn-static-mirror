@@ -18,12 +18,13 @@ printf "%s" $'\e[1;32m
 
     '
 
-if ! [ -z "$DIR" ];
+if ! [ -z "$MDN_DIR" ];
 then
   echo "--> creating temp directory"
   DIR=$(mktemp -d /tarball/tarball-generate.XXXXXX)
 else
-  echo "--> using provided directory $DIR"
+  echo "--> using provided directory $MDN_DIR"
+  DIR=$MDN_DIR
 fi
 pushd "$DIR" > /dev/null
 
@@ -42,7 +43,7 @@ find . -maxdepth 1 -type f -exec mv {} developer.cdn.mozilla.net \;
 # inject custom search page into content
 
 echo "--> creating tarball"
-tar czf mdn.tar.gz *
+tar czf mdn.tar.gz ./*
 
 echo "--> publishing to ?????"
 # TODO where do we publish this?
