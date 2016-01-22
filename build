@@ -2,7 +2,6 @@
 
 # strict error checking
 set -e
-set -u
 
 printf "%s" $'\e[1;32m
     ##     ##  #######    ##    ##
@@ -18,13 +17,13 @@ printf "%s" $'\e[1;32m
 
     '
 
-if ! [ -z "$MDN_DIR" ];
+if [[ "$1" ]];
 then
+  echo "--> using provided directory $1"
+  DIR=$1
+else
   echo "--> creating temp directory"
   DIR=$(mktemp -d /tarball/tarball-generate.XXXXXX)
-else
-  echo "--> using provided directory $MDN_DIR"
-  DIR=$MDN_DIR
 fi
 pushd "$DIR" > /dev/null
 
